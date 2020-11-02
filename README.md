@@ -11,7 +11,7 @@ In 42, it is already installed, you can check in:
 cd /usr/local/bin/
 ```
 Here you will see the *kubectl* directory.
-[link to kubectl overview.](https://kubernetes.io/docs/reference/kubectl/overview/)
+[link to kubectl overview.](https:/Y/kubernetes.io/docs/reference/kubectl/overview/)
 
 ## Minikube
 ### Install minikube
@@ -41,6 +41,8 @@ Soft link the `/goinfre/\<user_name\>/.minikube` to `~/.minikube`
 ```sh
 ln -s /goinfre/$USER/.minikube ~/.minikube
 ```
+
+Important note: you'll have to do this everytime you change computer, therefore it might be of interest to make a script that does this for you.
 
 Now when you start minikube, it will be loaded into the goingfre space instead of your personal home partition.
 
@@ -101,6 +103,7 @@ The last of the methods involves copying a set-up config-file (which you can mak
 
 Once you have started minikube, which will take a while... you will notice on VirtualBox, that you have *minikube* running on the left-pane. Clicking on it will show the specifics of the instance. By defeult it will run on 2Gb of memory. We can change this setting (among others) by using:
 
+(Change *nginx-pod* to whatever name you used.)
 ```sh
 minikube config set memory 4000
 ```
@@ -110,7 +113,7 @@ To set the memory to 4000Mb for instance. This is using *Method 2*, which is per
 
 Having reached this stage, you can *start*, *stop*, *delete*, set-up some basic *config* and *view config*.
 
-#### Using more profile
+#### Using more profiles
 
 Using more profiles might be useful when we want instances for different things, with different specs (e.g. less memory).
 
@@ -239,5 +242,207 @@ To view the logs through console, run:
 ```sh
 kubectl logs -f nginx-pod
 ```
-(Change *nginx-pod* to whatever name you used.)
+(Change *nginx-pod* to whatever name you used.).
 
+### Create a Deployment
+
+A deployment orchestrates the number of pods. A deployment can be launched through the dashboard interface (+ new app) or by applying a template such as the example shown below. 
+
+```yml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-awesome-deployment
+  labels:
+    app: nginx
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        ports:
+        - containerPort: 80
+```
+
+To delete a deployment, execute the following command:
+
+```sh
+kubectl -n default delete <name_of_deployment>
+```
+Note that "*default*"is the namespace, which, if you haven't changed should be called *default*.
+
+### Services
+
+Pods are mortal. It is important that this is clear from the outset. For this reason, we do not want to access pods directly because those pods could (and will) disappear. For this reason **services** are used, these expose pods in a unified manner. The rest of the applications will engage a service (rather than a pod), and it is the service itself which is in charge of distributing the workload between the pods it handles.
+
+Services can be created throught the dashboard or by applying a template such as the example below.
+
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mariadb-service
+spec:
+  selector:
+    app: mariadb
+  ports:
+      - protocol: TCP
+        port: 3306
+        targetPort: 3306
+```
+
+Note that the service needs to know which pods to hook to. This is what the **selector** field is for.
+In this particular example the service is hooked to any components that meet the following criteria:
+```yml
+app: mariadb
+```
+Meaning that all pods running mariadb app will be hooked by this service.
+
+*Note*: Notice we used the **selector** field in previous templates as well.
+
+### Get a Pod Description
+
+Get a pod's name using:
+```sh
+kubectl get pod
+```
+Note: you can use *pod* or *pods*.
+
+Copy the pod's name, e.g.: mariadb-deployment-84f67bd45d-w877t.
+Execute:
+```sh
+kubectl describe pod mariadb-deployment-84f67bd45d-w877t
+```
+
+### Communication between pods: Services
+
+This section covers communication between 2 pods by means of an example.
+Launch 2 deployments (for instance, mariadb and nginx).
+
+Enter nginx:
+```sh
+kubectl exec -it <name of nginx_pod> -- /bin/bash
+```
+
+Note: if command **ping** is not recognized execute the following.
+```sh
+apt-get update
+apt-get install iputils-ping
+```
+Now check communication between nginx pod and mariadb pod.
+```sh
+ping mariadb
+```
+You will note that the name or service is unknown. This makes sense as there could be many mariadb pods, how can this pod know which one to communicate with? How can it even recognize the name? (Answer: Services - described further below).
+Instead, lets ping the ip of a mariadb pod (which you can get with the describe command from the previous point).
+
+```sh
+ping <mariadb_pod_ip>
+```
+You'll notice that now it does indeed ping the pod. **However**, it is important to remember that **pods are mortal**, therefore it is not of great interest to communicate directly with a pod which may cease existing at any moment. What we want is to address a service, which will in turn decide which pod to engage with.
+
+If we now create a service, using what was covered in **Services** and repeat the process:
+
+```sh
+ping mariadb-service
+```
+(Note: mariadb-service is the name given to the service through the yaml template.)
+
+This time we see that ping successfully pings the service (though no reply is heard).
+
+### Get a Service Description
+
+Much the same as with the pod description, we execute:
+
+```sh
+kubectl describe service <service_name>
+```
+
+### Ingress (with example)
+
+What is ingress used for?
+
+Internal services are only available inside the cluster. In order to expose services externally (provide connectivity) **ingress** is used.
+
+This a beta feature (as Kubernetes is not a full final product) and is disabled by default.
+To enable, run the following:
+```sh
+minikube addons enable ingress
+```
+
+Creating an ingress, is only possible through console. For this we use a template.
+
+[Ingress documentation.](https://kubernetes.io/docs/concepts/services-networking/ingress/)
+
+
+
+In the following example, we want to run nginx pods (using deployment or pods).
+
+Next, we are going to apply an nginx service using the following template.
+```yml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  selector:
+    app: nginx
+  ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 80
+```
+
+Apply this service using:
+```sh
+kubectl apply -f service-nginx.yml
+```
+(Using *service-nginx.yml* as an example file name).
+
+Next we create an ingress template.
+```yml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - http:
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+                name: nginx-service
+                port:
+                    number: 80
+```
+
+Apply the ingress using:
+```sh
+kubectl apply -f <filename.yml>
+```
+
+It might take some time but eventually when you run:
+```sh
+kubectl get ingress
+```
+You will see the name of the ingress and that the HOSTS value is **\*** which means it is listening to ALL.
+
+Get the minikube IP using:
+
+```sh
+minikube ip
+```
+
+Copy this IP and paste it into the browser. You should now see the nginx intro-page.
