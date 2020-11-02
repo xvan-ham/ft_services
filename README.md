@@ -14,7 +14,7 @@ Here you will see the *kubectl* directory.
 [link to kubectl overview.](https:/Y/kubernetes.io/docs/reference/kubectl/overview/)
 
 ## Minikube
-### Install minikube
+## Install minikube
 
 *Minikube* controls/manages the cluster. It will run a VM and run a master node and worker node.
 
@@ -24,7 +24,7 @@ Here you will see the *kubectl* directory.
 brew install minikube
 ```
 
-### Start minikube in /goinfre
+## Start minikube in /goinfre
 
 Minikube will use a lot of disk-space, probably all of it so do not start it as is, we want to start in in `/goinfre` (which is local, it will only be saved on that computer).
 
@@ -57,7 +57,7 @@ For this, we have 3 options:
 * Method 2: Add the desired VM-driver (virtualbox) to the config by command.
 * Method 3: Copy a config file to `~/.minikube/config`.
 
-#### Method 1
+### Method 1
 
 The first option means re-typing the command every time we start up.
 Run with command:
@@ -65,7 +65,7 @@ Run with command:
 minikube start --vm-driver=virtualbox
 ```
 
-#### Method 2
+### Method 2
 
 The second option is persistent as it is saved in a `config.json` file.
 ```sh
@@ -94,12 +94,12 @@ minikube config view
 ```
 Which you can also see in `~/.minikube/config/config.json`
 
-#### Method 3
+### Method 3
 
 The last of the methods involves copying a set-up config-file (which you can make using the previous method once, and carry over to any system) to `~/.minikube/config/`.
 
 
-#### Once started
+### Once started
 
 Once you have started minikube, which will take a while... you will notice on VirtualBox, that you have *minikube* running on the left-pane. Clicking on it will show the specifics of the instance. By defeult it will run on 2Gb of memory. We can change this setting (among others) by using:
 
@@ -109,11 +109,11 @@ minikube config set memory 4000
 ```
 To set the memory to 4000Mb for instance. This is using *Method 2*, which is persistent but will require deleting the current instance.
 
-### Learning to use minikube
+# Learning to use minikube
 
 Having reached this stage, you can *start*, *stop*, *delete*, set-up some basic *config* and *view config*.
 
-#### Using more profiles
+## Using more profiles
 
 Using more profiles might be useful when we want instances for different things, with different specs (e.g. less memory).
 
@@ -136,7 +136,7 @@ To delete this profile:
 minikube delete -p <name>
 ```
 
-#### Viewing Namespaces
+## Viewing Namespaces
 
 Namespaces are used to sub-divide a cluster into several virtual clusters. Useful for example to have a development namespace (virtual cluster) running in parallel with a testing and production namespace.
 
@@ -152,7 +152,7 @@ kubectl get namespaces
 ```
 This command will list all currently used namespaces.
 
-#### Creating Namespaces
+## Creating Namespaces
 
 On another tab (if you have the dashboard open it will not register commands on that tab - use Ctrl+C to exit dashboard if desired), run:
 
@@ -174,14 +174,14 @@ kubectl apply -f <name>
 ```
 Which will create the namespace. Note that templates are the most interesting way of working with Kubernetes, as this is a tool primarily built for automatization.
 
-### Delete Namespaces
+## Delete Namespaces
 
 To delete, simply execute:
 ```sh
 cubectl delete namespace <name>
 ```
 
-### Create a Pod
+## Create a Pod
 
 A pod is the smallest unit used in Kubernetes. To create one from a template, use a template such as:
 
@@ -217,7 +217,7 @@ kubectl describe pod nginx-pod
 ```
 (Change *nginx-pod* to whatever name you used.)
 
-### Enter the Pod
+## Enter the Pod
 
 Once a pod is created, to access it, there are 2 options:
 * Through graphical interface.
@@ -232,7 +232,7 @@ kubectl exec -it nginx-pod -- /bin/bash
 (Change *nginx-pod* to whatever name you used.)
 Note: The only difference with running with docker is the *--* part, which is not necessary with docker (`docker exec -it [image] [command]`). Docker's method is deprecated and will be removed in a future version, however, at the time of writing it is still functional.
 
-### View Pod Logs
+## View Pod Logs
 
 Viewing a pod's logs is also possible both through the grapical interface and through console.
 
@@ -244,7 +244,7 @@ kubectl logs -f nginx-pod
 ```
 (Change *nginx-pod* to whatever name you used.).
 
-### Create a Deployment
+## Create a Deployment
 
 A deployment orchestrates the number of pods. A deployment can be launched through the dashboard interface (+ new app) or by applying a template such as the example shown below. 
 
@@ -279,7 +279,7 @@ kubectl -n default delete <name_of_deployment>
 ```
 Note that "*default*"is the namespace, which, if you haven't changed should be called *default*.
 
-### Services
+## Services
 
 Pods are mortal. It is important that this is clear from the outset. For this reason, we do not want to access pods directly because those pods could (and will) disappear. For this reason **services** are used, these expose pods in a unified manner. The rest of the applications will engage a service (rather than a pod), and it is the service itself which is in charge of distributing the workload between the pods it handles.
 
@@ -308,7 +308,7 @@ Meaning that all pods running mariadb app will be hooked by this service.
 
 *Note*: Notice we used the **selector** field in previous templates as well.
 
-### Get a Pod Description
+## Get a Pod Description
 
 Get a pod's name using:
 ```sh
@@ -322,7 +322,7 @@ Execute:
 kubectl describe pod mariadb-deployment-84f67bd45d-w877t
 ```
 
-### Communication between pods: Services
+## Communication between pods: Services
 
 This section covers communication between 2 pods by means of an example.
 Launch 2 deployments (for instance, mariadb and nginx).
@@ -358,7 +358,7 @@ ping mariadb-service
 
 This time we see that ping successfully pings the service (though no reply is heard).
 
-### Get a Service Description
+## Get a Service Description
 
 Much the same as with the pod description, we execute:
 
@@ -366,7 +366,7 @@ Much the same as with the pod description, we execute:
 kubectl describe service <service_name>
 ```
 
-### Ingress (with example)
+## Ingress (with example)
 
 What is ingress used for?
 
@@ -437,7 +437,7 @@ It might take some time but eventually when you run:
 ```sh
 kubectl get ingress
 ```
-You will see the name of the ingress and that the HOSTS value is **\*** which means it is listening to ALL.
+You will see the name of the ingress and that the HOSTS value is **"\*i"** which means it is listening to ALL.
 
 Get the minikube IP using:
 

@@ -1,5 +1,8 @@
 # Version History
 
+### v0.025a
+* Hot fixed formatting issues on README.
+
 ### v0.025
 * Fixed typos on README.
 
