@@ -1,5 +1,8 @@
 # Version History
 
+### v0.025
+* Fixed typos on README.
+
 ### v0.02
 * Added info on Services to README. 
 * Added info on Ingress with example to README.

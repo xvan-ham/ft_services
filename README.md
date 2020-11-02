@@ -174,7 +174,7 @@ kubectl apply -f <name>
 ```
 Which will create the namespace. Note that templates are the most interesting way of working with Kubernetes, as this is a tool primarily built for automatization.
 
-#### Delete Namespaces
+### Delete Namespaces
 
 To delete, simply execute:
 ```sh
@@ -192,8 +192,8 @@ metadata:
 	name: nginx-pod
 spec:
 	containers:
-	-name: nginx-container
-		image: nginx
+	- name: nginx-container
+	  image: nginx
 
 ```
 Name this file however you like, e.g. pod.yml.
