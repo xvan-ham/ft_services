@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-deployment 
+  labels:
+    app: ft-server2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ft-server2
+  template:
+    metadata:
+      labels:
+        app: ft-server2
+    spec:
+      containers:
+      - name: ft-server
+        image: ft-server2
+        imagePullPolicy: Never
+        command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+        ports:
+        - containerPort: 80
+

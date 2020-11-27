@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mytest-service
+spec:
+  selector:
+    app: ft-server2
+  ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 80
+

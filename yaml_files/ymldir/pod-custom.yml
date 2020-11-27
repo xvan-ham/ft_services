@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+metadata:
+    name: ft-server-pod
+spec:
+    containers:
+        - name: ft-server
+          image: ft-server2
+          imagePullPolicy: Never
+          command: [ "/bin/bash", "-ce", "tail -f /dev/null" ]
+

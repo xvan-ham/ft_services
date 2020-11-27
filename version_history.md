@@ -1,5 +1,8 @@
 # Version History
 
+### v0.03d
+* Added work in progress files towards completing nginx container deployment.
+
 ### v0.025a
 * Hot fixed formatting issues on README.
 

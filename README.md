@@ -69,7 +69,7 @@ minikube start --vm-driver=virtualbox
 
 The second option is persistent as it is saved in a `config.json` file.
 ```sh
-minikube config set vm-driver virtualdriver
+minikube config set vm-driver virtualbox
 ```
 It will warn us that these changes will only take place when we delete (not just stop) the instance. If you have not already started minikube you can ignore the next 2 commands.
 
@@ -101,7 +101,7 @@ The last of the methods involves copying a set-up config-file (which you can mak
 
 ### Once started
 
-Once you have started minikube, which will take a while... you will notice on VirtualBox, that you have *minikube* running on the left-pane. Clicking on it will show the specifics of the instance. By defeult it will run on 2Gb of memory. We can change this setting (among others) by using:
+Once you have started minikube, which will take a while... you will notice on VirtualBox, that you have *minikube* running on the left-pane. Clicking on it will show the specifics of the instance. By default it will run on 2Gb of memory. We can change this setting (among others) by using:
 
 (Change *nginx-pod* to whatever name you used.)
 ```sh
@@ -437,7 +437,7 @@ It might take some time but eventually when you run:
 ```sh
 kubectl get ingress
 ```
-You will see the name of the ingress and that the HOSTS value is **"\*i"** which means it is listening to ALL.
+You will see the name of the ingress and that the HOSTS value is **"\*"** which means it is listening to ALL.
 
 Get the minikube IP using:
 
@@ -446,3 +446,46 @@ minikube ip
 ```
 
 Copy this IP and paste it into the browser. You should now see the nginx intro-page.
+
+
+## ConfigMap and Secrets
+
+It is logically interesting to modify the base docker image. One way to to do this is modify the image using a Dockerfile and then upload the image to [Docker Hub](https://hub.docker.com/).
+
+Needless to say, this is not a very elegant solution, as this would plague Docker Hub with very specific images which perhaps do not contribute anything to the community. Besides, if there is sensitive data we do not want to expose we should not be using this approach.
+
+For this, Kubernetes has two tools: ConfigMap and Secrets. The first one is used to inject configuration info into the image, the second is similar but scrambles the data as to protect it (interesting for passing variables such as passwords).
+
+## Copy data from computer to pod or vice-versa
+
+Copying data to from local to pod:
+```sh
+kubectl cp /tmp/foo_dir <some-pod>:/tmp/bar_dir
+```
+Copies local file `/tmp/foo_dir` to `/tmp/bar_dir` in pod.
+
+
+Copying data from pod to local:
+```sh
+kubectl cp <some-namespace>/<some-pod>:/tmp/foo /tmp/bar
+```
+Copies `/tmp/foo` from a remote pod to `/tmp/bar` locally.
+
+## Link Minikube and Docker
+
+Minikube starts all the corresponding containers, however, the Docker environment does not have direct access to these by default so it seems as though you're not running any containers at all.
+
+Run the following command:
+```sh
+eval $(minikube docker-env)
+```
+
+If kubernetes is up and running a cluster, you will see all the kubernetes images when you run:
+```sh
+docker image ls
+```
+
+And all the currently running containers with:
+```sh
+docker ps
+```
