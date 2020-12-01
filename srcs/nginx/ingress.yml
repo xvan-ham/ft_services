@@ -7,4 +7,4 @@ spec:
     serviceName: nginx
     servicePort: 80
     servicePort: 443
-    servicePort: 22
+    servicePort: 4000

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+kubectl delete -f nginx.yml
+kubectl delete -f ingress.yml
+docker image rm -f nginx-services
+docker build -t nginx-services .
+kubectl apply -f nginx.yml
+kubectl apply -f ingress.yml

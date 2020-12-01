@@ -1,6 +1,8 @@
 # Based on https://wiki.alpinelinux.org/wiki/Nginx
 
-FROM alpine
+FROM alpine 
+
+USER root
 
 # Update
 RUN apk update
@@ -10,40 +12,30 @@ RUN apk upgrade
 RUN apk add nginx
 RUN apk add openssh
 RUN apk add openssl
+RUN apk add openrc
 
-# Creating new user and group 'www' for nginx (default used by nginx)
- RUN adduser -D -g 'www' www
+# Copy necessary files
+COPY srcs/nginx.conf /etc/nginx/nginx.conf
+COPY srcs/index.html /var/www/localhost/ft_services/index.html
 
-# create dir for website content (will be specified in config file).
-RUN mkdir -p /www
-# nginx config will not work without following (related to pid):
+# Generate private SSL key and certificate
+RUN yes "" | openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/certs/localhost.key -out /etc/ssl/certs/localhost.crt
+#RUN yes "" | openssl req -new -x509 -days 365 -sha256 -nodes -out /etc/ssl/certs/localhost.crt -keyout /etc/ssl/certs/localhost.key -subj "/C=ES/ST=Madrid/L=Madrid/O=42 Madrid/OU=xvan-ham/CN=ft_server"
+#RUN echo 'SSH of ft_services by xvan-ham' > /etc/motd
+
+# ssh
+RUN adduser -D "__SSH_USERNAME__"
+RUN echo "__SSH_USERNAME__:__SSH_PASSWORD__" | chpasswd
+
+# create directory to save nginx master process PID
 RUN mkdir -p /run/nginx
-# create file to give nginx read permissions
-RUN mkdir -p /var/lib/nginx
 
-# give read permissions to user and group "www", which is used by nginx (specified in config file).
-RUN chown -R www:www /var/lib/nginx
-RUN chown -R www:www /www
+# Add services to rc list 
+RUN openrc
+RUN touch /run/openrc/softlevel
+RUN rc-update add sshd
 
-# copy nginx config file to container
-COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 22 80 443
 
-# copy index page for a customized html index page
-COPY index.html /www/index.html
-
-# SSH user and SSL key creation
-RUN adduser -D user
-RUN echo "user:password"|chpasswd
-RUN ssh-keygen -A
-RUN yes "" | openssl req -new -x509 -days 365 -sha256 -nodes -out /etc/ssl/certs/xvan-ham.crt -keyout /etc/ssl/certs/xvan-ham.key -subj "/C=ES/ST=Madrid/L=Madrid/O=42 Madrid/OU=xvan-ham/CN=ft_server"
-RUN echo 'SSH of ft_services by xvan-ham' > /etc/motd
-
-# Start script to init nginx
-COPY start.sh ./start.sh
-RUN chmod +x /start.sh
-CMD sh ./start.sh
-
-# expose ports
-EXPOSE 80
-EXPOSE 443
-EXPOSE 22
+# On entry: OpenSSH server process (which listens to incomming connections using the SSH protocol); and nginx process with daemon off.
+ENTRYPOINT /etc/init.d/sshd start; nginx -g "daemon off;"

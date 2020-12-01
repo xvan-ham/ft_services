@@ -1,5 +1,11 @@
 # Version History
 
+### v0.1d
+* Working nginx container launch with kubernetes (both http and https).
+* Added html index page which will hold all the necessary links.
+* Deleted "start.sh" and incorportated into Dockerfile.
+* Added "re", "mk" and "del" scripts temporarily to speed up testing.
+
 ### v0.03d
 * Added work in progress files towards completing nginx container deployment.
 
