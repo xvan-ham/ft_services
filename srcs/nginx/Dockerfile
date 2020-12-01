@@ -13,10 +13,13 @@ RUN apk add nginx
 RUN apk add openssh
 RUN apk add openssl
 RUN apk add openrc
+#RUN apk add telegraf --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ --allow-untrusted --no-cache
 
 # Copy necessary files
 COPY srcs/nginx.conf /etc/nginx/nginx.conf
+#COPY srcs/index_model.html /var/www/localhost/htdocs/index.html
 COPY srcs/index.html /var/www/localhost/ft_services/index.html
+#COPY srcs/telegraf.conf /etc/telegraf.conf
 
 # Generate private SSL key and certificate
 RUN yes "" | openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/certs/localhost.key -out /etc/ssl/certs/localhost.crt
@@ -34,6 +37,7 @@ RUN mkdir -p /run/nginx
 RUN openrc
 RUN touch /run/openrc/softlevel
 RUN rc-update add sshd
+#RUN rc-update add telegraf
 
 EXPOSE 22 80 443
 

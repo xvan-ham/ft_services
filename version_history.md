@@ -1,8 +1,16 @@
 # Version History
 
+### v0.11dd
+* Edited Dockerfile, now does not rely on "start" script.
+* Modified "re", "mk", "del" scripts to stop any pods, deployments, services and ingresses before proceeding.
+* Added index.html (forgot to add on v0.1d).
+* Modified "ingress.yml".
+* Modified "nginx.conf"
+
 ### v0.1d
+(Version has a lot of forgotten items, avoid this version).
 * Working nginx container launch with kubernetes (both http and https).
-* Added html index page which will hold all the necessary links.
+* Added html index page which will hold all the necessary links (correction v0.011d: forgot to add to this commit).
 * Deleted "start.sh" and incorportated into Dockerfile.
 * Added "re", "mk" and "del" scripts temporarily to speed up testing.
 

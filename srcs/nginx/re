@@ -1,7 +1,8 @@
 #!/bin/bash
-
-kubectl delete -f nginx.yml
-kubectl delete -f ingress.yml
+kubectl delete pod --all
+kubectl delete deployment --all
+kubectl delete service --all
+kubectl delete ingress --all
 docker image rm -f nginx-services
 docker build -t nginx-services .
 kubectl apply -f nginx.yml
