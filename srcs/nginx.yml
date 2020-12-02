@@ -5,7 +5,7 @@ metadata:
   labels:
     app: nginx
 spec:
-  type: NodePort
+    #type: Port
   selector:
     app: nginx
   ports:
@@ -15,7 +15,7 @@ spec:
       port: 443
     - name: ssh
       port: 22
-      nodePort: 30022
+      port: 3022
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -36,6 +36,9 @@ spec:
       - name: nginx
         image: nginx-services
         imagePullPolicy: Never
+        env:
+        - name: "IP"
+          value: "__IP_VAR__"
         ports:
         - containerPort: 80
           name: http

@@ -1,5 +1,0 @@
-#!/bin/bash
-
-docker build -t nginx-services .
-kubectl apply -f nginx.yml
-kubectl apply -f ingress.yml

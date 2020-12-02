@@ -1,6 +1,13 @@
 # Version History
 
-### v0.11dd
+### v0.15
+* Moved "del" script to ft_server root folder.
+* Deleted "mk" and "re" scripts.
+* Created "setup.sh", which for now uses "del" scripts (to clean up running cluster) and passes minikube IP to both the html index page (in nginx) and creates an environment variable IP within every nginx pod (with the same minikube IP value).
+* Restructured: moved yml files to ft_server/srcs; Dockerfile to ft_server/srcs/nginx/.
+* Moved "readme" file to root folder (this file contains interesting commands which are useful during development).
+
+### v0.11d
 * Edited Dockerfile, now does not rely on "start" script.
 * Modified "re", "mk", "del" scripts to stop any pods, deployments, services and ingresses before proceeding.
 * Added index.html (forgot to add on v0.1d).
