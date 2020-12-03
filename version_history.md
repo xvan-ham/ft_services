@@ -1,5 +1,8 @@
 # Version History
 
+### v0.16d
+* Started working on influxdb-telegraf-grafana stack. Nothing major has been added, only loose instructions in "/srcs/influxdb/readme" used to get the stack working in a single docker container. Future work will be towards implementing this within a kubernetes environment.
+
 ### v0.15
 * Moved "del" script to ft_server root folder.
 * Deleted "mk" and "re" scripts.

@@ -1,0 +1,13 @@
+./influxd
+./influx
+
+# in another tab
+/usr/bin/telegraf -sample-config -input-filter cpu:mem:disk -output-filter influxdb > telegraf.conf
+/usr/bin/telegraf/telegraf --config telegraf.conf
+
+# in influx tab
+show databases
+use telegraf
+show measurements #shows cpu, mem, disk
+select * from cpu #shows all data on cpu
+
