@@ -1,0 +1,40 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+
+    #type: NodePort
+    selector:
+        app: grafana
+    ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: grafana
+  name: grafana
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana
+        imagePullPolicy: Never
+        ports:
+        - name: grafana
+          containerPort: 3000
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

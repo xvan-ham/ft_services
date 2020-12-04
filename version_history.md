@@ -1,5 +1,11 @@
 # Version History
 
+### v0.2d
+* Added Dockerfile and yml files for influxdb and grafana.
+* Added grafana and influxdb services to ingress.
+* Moved nginx.yml to ft_services/srcs.
+* Changed font and background color of index.html (used in nginx pods).
+
 ### v0.16d
 * Started working on influxdb-telegraf-grafana stack. Nothing major has been added, only loose instructions in "/srcs/influxdb/readme" used to get the stack working in a single docker container. Future work will be towards implementing this within a kubernetes environment.
 

@@ -11,3 +11,12 @@ use telegraf
 show measurements #shows cpu, mem, disk
 select * from cpu #shows all data on cpu
 
+# =======================================
+
+influxd # tab will remain busy
+influx # will keep tab busy with DB queries
+cp telegraf.conf /etc/telegraf/telegraf.conf 
+# OR:
+# telegraf --congif /etc/telegraf.conf
+telegraf # will keep tab busy "telegrafing" to specified DB (new database will appear in "influx" tab when "show databases" query is run.
+/usr/sbin/grafana-server --config /etc/grafana.ini --homepath=/usr/share/grafana #homepath leads to default values, grafana.ini saves the configuration. This will keep tab busy.

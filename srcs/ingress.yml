@@ -6,3 +6,7 @@ spec:
   backend:
     serviceName: nginx
     servicePort: 80
+    serviceName: influxdb
+    servicePort: 8086
+    serviceName: grafana
+    servicePort: 3000
