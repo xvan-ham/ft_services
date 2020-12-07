@@ -1,5 +1,17 @@
 # Version History
 
+### v0.25d
+* Heavily modified "setup.sh" script to add or remove functionality as desired (using switches).
+* Added switch to "setup.sh": "--clean" - cleans up by deleting all yml funcionality, deleting all docker images (incl. untagged images).
+* Added switch to "setup.sh": "--re" - rebuild switch, when enabled the currently existing and relevant docker images are deleted before rebuilding.
+* Added switch to "setup.sh": "--k_del" - removes all yml configurations.
+* Added switch to "setup.sh": "--d_del" - deletes all docker images (used by ft_server) including all untagged images.
+* Added switch to "setup.sh": "--k_apply" - applies all yml configurations.
+* Added switch to "setup.sh": "--d_nginx" - rebuilds nginx docker image (without first deleting existing images, unless "-re" switch is also specified).
+* Added switch to "setup.sh": "--d_grafana" - rebuilds grafana docker image (without first deleting existing images, unless "-re" switch is also specified).
+* Added switch to "setup.sh": "--d_influxdb" - rebuilds influxdb docker image (without first deleting existing images, unless "-re" switch is also specified).
+* Added switch to "setup.sh": "--d_all" - rebuilds all ft-services docker images (without first deleting existing images, unless "-re" switch is also specified).
+
 ### v0.2d
 * Added Dockerfile and yml files for influxdb and grafana.
 * Added grafana and influxdb services to ingress.
