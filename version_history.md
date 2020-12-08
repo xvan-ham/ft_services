@@ -1,5 +1,9 @@
 # Version History
 
+### v0.28d
+* Added color to "setup.sh" outputs to fd 1.
+* Adding a basic error check and prompt to interrupt setup in case of error (WIP).
+
 ### v0.25d
 * Heavily modified "setup.sh" script to add or remove functionality as desired (using switches).
 * Added switch to "setup.sh": "--clean" - cleans up by deleting all yml funcionality, deleting all docker images (incl. untagged images).
