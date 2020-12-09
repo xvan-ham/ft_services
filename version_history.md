@@ -1,5 +1,13 @@
 # Version History
 
+### v0.3
+Working "setup.sh" with nginx (static http and https only for the time being).
+* Performs some basic essential pre-run checks (Docker running, minikube running, mimikube docker-env vars evaluated), suggests next course of action to user and prompts exit if not all pre-run checks have passed.
+* Checks whether Docker-build runs of Dockerfiles are sucessful, warning and prompting user to fix the error or continue with errors (if Docker image is not essential for testing purposes for instance).
+* Verbose and silent mode available. By deault the output is silenced to minimize screen output. This can be changed by passing a "--v" or "--verbose" argument.
+* By default, everything currently running on minikube will be deleted (not sourcefiles), docker images will be rebuilt (if changes are applicable) and yml config will be reapplied thereafter.
+* If other switches are passed as arguments (see v0.25d), with the exception of the verbose switch, only those actions will be performed (as opposed to the default behavior).
+
 ### v0.28d
 * Added color to "setup.sh" outputs to fd 1.
 * Adding a basic error check and prompt to interrupt setup in case of error (WIP).

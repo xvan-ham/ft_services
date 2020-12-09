@@ -23,11 +23,25 @@ magenta=$'\e[0;1;95;40m'
 reset=$'\e[0m'
 
 # Global Variables
-IP_VAR=$(minikube ip)
-KEYW=("--clean" "--re" "--k_del" "--d_del" "--k_apply" "--d_nginx" "--d_grafana" "--d_influxdb" "--d_all")
+IP_VAR=0
+KEYW=("--v" "--verbose" "--clean" "--re" "--k_del" "--d_del" "--k_apply" "--d_nginx" "--d_grafana" "--d_influxdb" "--d_all")
 RE=0
+M_FAIL=0
+D_FAIL=0
+MD_FAIL=0
+D_B_FAIL=0
+ERRORS=0
+VERBOSE=0
 
 # Functions
+
+function verbose() {
+	VERBOSE=1
+}
+
+function v() {
+	verbose "$@"
+}
 
 function clean() {
 	
@@ -41,71 +55,164 @@ function clean() {
 function re() {
 	RE=1
 	echo -e "${red}Deleting ${cyan}dangling ${green}(untagged) docker images.${reset}"
-	docker image rm $(docker images -q --filter "dangling=true")
+	if [ $VERBOSE -eq 1 ]
+	then
+		docker image rm $(docker images -q --filter "dangling=true")
+	else
+		docker image rm $(docker images -q --filter "dangling=true") &> /dev/null
+	fi
 }
 
 function k_del() {
 	echo -e "${red}Deleting ${cyan}minikube pods${green}, ${cyan}deployments${green} and ${cyan}services${green}.${reset}"
-	kubectl delete pod --all
-	kubectl delete deployment --all
-	kubectl delete service --all
-	kubectl delete ingress --all
-	wait
+	if [ $VERBOSE -eq 1 ]
+	then
+		kubectl delete pod --all
+		kubectl delete deployment --all
+		kubectl delete service --all
+		kubectl delete ingress --all
+		echo -e "${green}Minikube items have all been deleted.${reset}"
+	else
+		kubectl delete pod --all &> /dev/null
+		wait
+		echo -e "${green}Minikube ${cyan}pods${green} deleted.${reset}"
+		kubectl delete deployment --all &> /dev/null
+		wait
+		echo -e "${green}Minikube ${cyan}deployments${green} deleted.${reset}"
+		kubectl delete service --all &> /dev/null
+		wait
+		echo -e "${green}Minikube ${cyan}services${green} deleted.${reset}"
+		kubectl delete ingress --all &> /dev/null
+		wait
+		echo -e "${green}Minikube ${cyan}ingresses${green} deleted.${reset}"
+	fi
 }
 
 function k_apply() {
-	echo -e "${green_b}Applying${green} all ${cyan}yml ${green}files${reset}"
-	kubectl apply -f srcs/grafana.yml
-	kubectl apply -f srcs/influxdb.yml
-	sed -i "" "s/__IP_VAR__/$IP_VAR/g" ./srcs/nginx.yml
-	kubectl apply -f srcs/nginx.yml
-	sed -i "" "s/$IP_VAR/__IP_VAR__/g" ./srcs/nginx.yml
-	kubectl apply -f srcs/ingress.yml
+	if [ $VERBOSE -eq 1 ]
+	then
+		echo -e "\n${green_b}Applying${green} all ${cyan}yml ${green}files${reset}\n"
+		kubectl apply -f srcs/grafana.yml
+		kubectl apply -f srcs/influxdb.yml
+		sed -i "" "s/__IP_VAR__/$IP_VAR/g" ./srcs/nginx.yml
+		kubectl apply -f srcs/nginx.yml
+		sed -i "" "s/$IP_VAR/__IP_VAR__/g" ./srcs/nginx.yml
+		kubectl apply -f srcs/ingress.yml
+	else
+		echo -e "${green_b}Applying${green} all ${cyan}yml ${green}files${reset}"
+		kubectl apply -f srcs/grafana.yml &> /dev/null
+		kubectl apply -f srcs/influxdb.yml &> /dev/null
+		sed -i "" "s/__IP_VAR__/$IP_VAR/g" ./srcs/nginx.yml
+		kubectl apply -f srcs/nginx.yml &> /dev/null
+		sed -i "" "s/$IP_VAR/__IP_VAR__/g" ./srcs/nginx.yml
+		kubectl apply -f srcs/ingress.yml &> /dev/null
+		echo -e "${green_b}Applied${green} all ${cyan}yml ${green}file configurations${reset}"
+	fi
 }
 
 function d_del() {
 	echo -e "${red}Deleting${cyan} docker images${green}: nginx-services, grafana and influxdb${reset}"
-	docker image rm -f nginx-services
-	docker image rm -f grafana
-	docker image rm -f influxdb
+	if [ $VERBOSE -eq 1 ]
+	then
+		docker image rm -f nginx-services
+		docker image rm -f grafana
+		docker image rm -f influxdb
+	else
+		docker image rm -f nginx-services &> /dev/null
+		docker image rm -f grafana &> /dev/null
+		docker image rm -f influxdb &> /dev/null
+	fi
 }
 
 function d_nginx() {
 	if [ $(containsElement "--d_del" $@) -eq 0 ] && [ $RE -eq 1 ]
 	then
 		echo -e "${red}Deleting${cyan} nginx docker image${reset}"
-		docker image rm -f nginx-services
+		if [ $VERBOSE -eq 1 ]
+		then
+			docker image rm -f nginx-services
+		else
+			docker image rm -f nginx-services &> /dev/null
+		fi
 	fi
 	sed -i "" "s/__IP_VAR__/$IP_VAR/g" ./srcs/nginx/srcs/index.html
+		for e in "${KEYW[@]}"
+		do
+			if [ $(containsElement $e $@) -eq 1 ]
+			then
+				$(echo $e | cut -c 3-) # remove the "--" from the keyword and execute function with corresponding name
+			#else
+			fi
+		done
 	echo -e "${green_b}BUILDING${cyan} nginx${reset}"
-	docker build -t nginx-services srcs/nginx/.
-		echo -e "${red}Docker return val pre-wait: $? ${reset}"
+	if [ $VERBOSE -eq 1 ]
+	then
+		docker build -t nginx-services srcs/nginx/.
+	else
+		docker build -t nginx-services srcs/nginx/. &> /dev/null
+	fi
+	D_B_FAIL=$?
 	wait
-		echo -e "${red}Docker return val: $? ${reset}"
 	sed -i "" "s/$IP_VAR/__IP_VAR__/g" ./srcs/nginx/srcs/index.html
+	if [ $D_B_FAIL -eq 1 ]
+	then
+		echo -e "\n${red}Docker build for ${cyan}nginx${red} failed${reset}\n"
+		error nginx
+	fi
 }
 
 function d_grafana() {
 	if [ $(containsElement "--d_del" $@) -eq 0 ] && [ $RE -eq 1 ]
 	then
 		echo -e "${red}Deleting${cyan} grafana docker image${reset}"
-		docker image rm -f grafana
+		if [ $VERBOSE -eq 1 ]
+		then
+			docker image rm -f grafana
+		else
+			docker image rm -f grafana &> /dev/null
+		fi
 	fi
-	echo "${green_b}BUILDING${cyan} grafana${reset}"
-	docker build -t grafana srcs/grafana/.
-		echo -e "${red}Docker return val: $? ${reset}"
+	echo -e "${green_b}BUILDING${cyan} grafana${reset}"
+	if [ $VERBOSE -eq 1 ]
+	then
+		docker build -t grafana srcs/grafana/.
+	else
+		docker build -t grafana srcs/grafana/. &> /dev/null
+	fi
+	D_B_FAIL=$?
 	wait
+	if [ $D_B_FAIL -eq 1 ]
+	then
+		echo -e "\n${red}Docker build for ${cyan}Grafana${red} failed${reset}\n"
+		error Grafana
+	fi
 }
 
 function d_influxdb() {
 	if [ $(containsElement "--d_del" $@) -eq 0 ] && [ $RE -eq 1 ]
 	then
 		echo "${red}Deleting${cyan} influxdb docker image${reset}"
-		docker image rm -f influxdb
+		if [ $VERBOSE -eq 1 ]
+		then
+			docker image rm -f influxdb
+		else
+			docker image rm -f influxdb &> /dev/null
+		fi
 	fi
-	echo "${green_b}BUILDING${cyan} influxdb${reset}"
-	docker build -t influxdb srcs/influxdb/.
+	echo -e "${green_b}BUILDING${cyan} influxdb${reset}"
+	if [ $VERBOSE -eq 1 ]
+	then
+		docker build -t influxdb srcs/influxdb/.
+	else
+		docker build -t influxdb srcs/influxdb/. &> /dev/null
+	fi
+	D_B_FAIL=$?
 	wait
+	if [ $D_B_FAIL -eq 1 ]
+	then
+		echo -e "\n${red}Docker build for ${cyan}influxDB${red} failed${reset}\n"
+		error influxDB
+	fi
 }
 
 function containsElement() {
@@ -120,53 +227,126 @@ function containsElement() {
 	fi
 }
 
-function error() {
-	echo -e "${green}An ${red}error${green} was encountered when building the docker image for: ${cyan}$1${green}."
-	docker image ls > /dev/null
-	local ret1=$?
-	local ret2
-	if [ $(docker image ls | grep "k8s.gcr.io" -ic) -gt 0 ]
+function checks() {
+	echo -e "${green}Performing pre-run checks on necessary processes before running...${reset}"
+	echo ""
+	echo -ne "${cyan}Minikube${green}:...................."
+	minikube ip &> /dev/null
+	if [ $? -ne 0 ]
 	then
-		ret2=1
+		echo -e "${red}FAIL${reset}"
+		M_FAIL=1
 	else
-		ret2=0
+		echo -e "${green}OK${reset}"
+		M_FAIL=0
 	fi
-	echo -e "${red}ret1 is: $ret1${reset}"
-	echo -e "${red}ret2 is: $ret2${reset}"
-	
-	if [ $ret1 -eq 1 ]
+	echo -ne "${cyan}Docker${green}:......................"
+	docker image ls &> /dev/null
+	if [ $? -ne 0 ]
 	then
-		echo -e "${green}A simple check reveals that ${cyan}Docker${green} is not running, or that the Docker daemon is otherwise not responding.${reset}"
-		echo -e "Check whether this is the case, initiate Docker and re-run this setup."
- # CONTINUE HERE ************************
+		echo -e "${red}FAIL${reset}"
+		D_FAIL=1
+	else
+		echo -e "${green}OK${reset}"
+		D_FAIL=0
+	fi
+	echo -ne "${cyan}Minikube docker env. vars${green}:..." #29chars
+	if [ $D_FAIL -eq 1 ]
+	then
+		echo -e "${red}FAIL${reset}"
+		MD_FAIL=1
+	elif [ $(docker image ls | grep "k8s.gcr.io" -ic) -gt 0 ]
+	then
+			echo -e "${green}OK${reset}"
+			D_FAIL=0
+	else
+		echo -e "${red}FAIL${reset}"
+		MD_FAIL=1
+	fi
+	echo ""
+	if [ $D_FAIL -eq 0 ] && [ $M_FAIL -eq 0 ] && [ $MD_FAIL -eq 0 ]
+	then
+		echo -e "${green_b}No errors${green}. Continuing.${reset}"
+		return 0
+	else
+		echo -e "${red}Errors found.\n${green}List of recommendations:${reset}"
+	fi
+	if [ $D_FAIL -ne 0 ]
+	then
+		echo -e "${green}- Initiate ${cyan}Docker${green}, for example by running the 42Toolbox init_docker scripts.${reset}"
+	fi
+	if [ $M_FAIL -ne 0 ]
+	then
+		echo -e "${green}- Initiate ${cyan}minikube${green}, for example by running ${blue}minikube start${green}.${reset}"
+	fi
+	if [ $MD_FAIL -ne 0 ]
+	then
+		echo -e "${green}- Evaluate ${cyan}minikube docker-env vars${green}, by running ${blue}eval \$(minikube docker-env)${green}.${reset}"
+	fi
+	echo ""
+	echo -e "${green}It is recommended that you exit and fix the necessary items before continuing as some elements will not work correctly without them.${reset}"
+	prompt_exit
+}
+
+function prompt_exit() {
+	ERRORS=1
 	while [ "$input" != "n" ] && [ "$input" != "y" ] && [ "$input" != "N" ] && [ "$input" != "Y" ]
 		do
-			if [ $ret -eq 1 ]
-			then
-				read -n1 -p "${green}A simple check reveals that ${cyan}Docker${green} is not running, or that the Docker daemon is otherwise not responding.
-			read -n1 -p "${green}An ${red}error${green} was encountered when building the docker image for: ${cyan}$1${green}."
-		   
-			Is Do you want to setup${cyan} $1${green}?${green_d}$3 ${magenta}(y/n)${blue} " input
-			echo "${reset}"
+			echo ""
+			read -n1 -p "${blue}Stop setup? ${green_d}(${magenta}no ${green_d}will continue with setup)${magenta} (y/n)${blue} " input
+			echo -e "${reset}\n"
 		done
 	if [ "$input" = "y" ] || [ "$input" = "Y" ]
 		then
-		echo "${green}Executing: ${cyan}$2${reset}"
-		bash $2
-		echo "${green_b}Done${reset}"
+			input=""
+			echo -e "${green}Exiting setup.${reset}"
+			exit 0
 	fi
 	if [ "$input" = "n" ] || [ "$input" = "N" ]
 		then
-		echo "Skipping ${cyan}$1${reset}"
+			input=""
+			echo -ne "${green}Continuing with setup (${magenta}WARNING: ${reset}"
+			if [ $M_FAIL -eq 1 ]
+			then
+				echo -ne "${green_d}ft_services cannot run without ${cyan}minikube${reset} "
+			fi
+			if [ $D_FAIL -eq 1 ]
+			then
+				echo -ne "${green_d}Docker images will not be built!${reset} "
+			fi
+			if [ $MD_FAIL -eq 1 ]
+			then
+				echo -ne "${green_d}Docker images that are built will not be accessible to minikube!${reset} "
+			fi
 	fi
-	input=""
+	echo -e "${green})."
+	sleep 3
+}
+
+function error() {
+	echo -e "${green}An ${red}error${green} was encountered when building the docker image for: ${cyan}$1${green}.${reset}"
+	if [ $D_FAIL -eq 0 ] && [ $M_FAIL -eq 0 ] && [ $MD_FAIL -eq 0 ]
+	then
+		echo -e "${cyan}Docker${green} seems to be running. There may be a problem with the ${cyan}Dockerfile.${reset}"
+	else
+		echo -e "${green}There were ${cyan}pre-run errors${green}, these may be the source of the error.${reset}"
+	fi
+	prompt_exit
 }
 
 function setup() {
 	local e
-	if [ $# -eq 0 ]
+	local action_f=0
+	checks
+	IP_VAR=$(minikube ip)
+	if [ $# -eq 0 ] || ( [ $# -eq 1 ] && ( [ $(containsElement "--v" $@) -eq 1 ] || [ $(containsElement "--verbose" $@) -eq 1 ] ) )
 	then
-		echo "${green}No args, ${blue}default${green} behaviour${reset}"
+		echo "${green}No args provided, ${blue}default${green} behaviour${reset}"
+		if [ $# -eq 1 ]
+		then
+			verbose
+		fi
+		# Define default behavior:
 		k_del
 		d_nginx
 		d_influxdb
@@ -177,10 +357,20 @@ function setup() {
 		do
 			if [ $(containsElement $e $@) -eq 1 ]
 			then
+				action_f=1
 				$(echo $e | cut -c 3-) # remove the "--" from the keyword and execute function with corresponding name
-			#else
 			fi
 		done
+	fi
+	#if [ $action_f -eq 0 ]
+	#then
+
+	echo ""
+	if [ $ERRORS -eq 1 ]
+	then
+		echo -e "${green_b}Finished${red} with errors${green}.${reset}"
+	else
+		echo -e "${green_b}Finished${green} without errors.${reset}"
 	fi
 }
 
