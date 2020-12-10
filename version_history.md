@@ -1,5 +1,12 @@
 # Version History
 
+### v0.31d
+Implementing WorkloadBalancer MetalLB in order to expose several ports.
+* Added function in "setup.sh" that detects first time run.
+* Added functions that install WorkloadBalancer (WIP, currently not exposing services adequately).
+KNOWN ISSUES:
+* MetalLB's speaker fails, when checking: 'k get pods -n metallb-system', speaker pod "speaker-hdsbd" reports: "CreateContainerConfigError".
+
 ### v0.3
 Working "setup.sh" with nginx (static http and https only for the time being).
 * Performs some basic essential pre-run checks (Docker running, minikube running, mimikube docker-env vars evaluated), suggests next course of action to user and prompts exit if not all pre-run checks have passed.

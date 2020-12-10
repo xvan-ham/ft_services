@@ -32,6 +32,7 @@ MD_FAIL=0
 D_B_FAIL=0
 ERRORS=0
 VERBOSE=0
+FIRST_TIME=0
 
 # Functions
 
@@ -86,6 +87,7 @@ function k_del() {
 		wait
 		echo -e "${green}Minikube ${cyan}ingresses${green} deleted.${reset}"
 	fi
+	kubectl delete -f srcs/metallb.yml ##FORMAT ################################
 }
 
 function k_apply() {
@@ -97,7 +99,7 @@ function k_apply() {
 		sed -i "" "s/__IP_VAR__/$IP_VAR/g" ./srcs/nginx.yml
 		kubectl apply -f srcs/nginx.yml
 		sed -i "" "s/$IP_VAR/__IP_VAR__/g" ./srcs/nginx.yml
-		kubectl apply -f srcs/ingress.yml
+		#kubectl apply -f srcs/ingress.yml
 	else
 		echo -e "${green_b}Applying${green} all ${cyan}yml ${green}files${reset}"
 		kubectl apply -f srcs/grafana.yml &> /dev/null
@@ -105,9 +107,10 @@ function k_apply() {
 		sed -i "" "s/__IP_VAR__/$IP_VAR/g" ./srcs/nginx.yml
 		kubectl apply -f srcs/nginx.yml &> /dev/null
 		sed -i "" "s/$IP_VAR/__IP_VAR__/g" ./srcs/nginx.yml
-		kubectl apply -f srcs/ingress.yml &> /dev/null
+		#kubectl apply -f srcs/ingress.yml &> /dev/null
 		echo -e "${green_b}Applied${green} all ${cyan}yml ${green}file configurations${reset}"
 	fi
+	kubectl apply -f srcs/metallb.yml ##FORMAT ################################
 }
 
 function d_del() {
@@ -266,7 +269,7 @@ function checks() {
 	echo ""
 	if [ $D_FAIL -eq 0 ] && [ $M_FAIL -eq 0 ] && [ $MD_FAIL -eq 0 ]
 	then
-		echo -e "${green_b}No errors${green}. Continuing.${reset}"
+		echo -e "${green_b}No errors${green}. Continuing.\n${reset}"
 		return 0
 	else
 		echo -e "${red}Errors found.\n${green}List of recommendations:${reset}"
@@ -334,11 +337,56 @@ function error() {
 	prompt_exit
 }
 
+function first_time_check() {
+	filename=./.settings
+	test -f $filename || echo "FIRST_TIME=1" > $filename
+	if [ $(grep "FIRST_TIME=1" -ic $filename) -gt 0 ]
+	then
+		FIRST_TIME=1
+	fi
+}
+
+function metallb() {
+	if [ "$(kubectl get configmap kube-proxy -n kube-system -o yaml | \
+	sed -e "s/strictARP: false/strictARP: true/" | \
+	kubectl diff -f - -n kube-system)" == "" ]
+	then
+		echo -e "    ${cyan}MetalLB:${green} No changes need to be made to configmap.${reset}"
+	else
+		echo -e "    ${cyan}MetalLB:${green} Changing configmap (setting strictARP to true).${reset}"
+		kubectl get configmap kube-proxy -n kube-system -o yaml | \
+		sed -e "s/strictARP: false/strictARP: true/" | \
+		kubectl apply -f - -n kube-system
+	fi
+	if [ $VERBOSE -eq 1 ]
+	then
+		kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/namespace.yaml
+		kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/metallb.yaml
+	else
+		kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/namespace.yaml &> /dev/null
+		kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.9.5/manifests/metallb.yaml &> /dev/null
+	fi
+		echo -e "${reset}  "
+	# On first install only
+	if [ $FIRST_TIME -eq 1 ]
+	then
+		kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+	fi
+}
+
 function setup() {
 	local e
 	local action_f=0
+	
 	checks
 	IP_VAR=$(minikube ip)
+	if [ $M_FAIL -eq 0 ] && [ $D_FAIL -eq 0 ]
+	then
+		first_time_check
+		metallb
+	else
+		echo -e "${magenta}WARNING: ${green}Did ${red}NOT${green} set up ${cyan}MetalLB${green}, minikube will most likely ${red}NOT${green} be accessible to localhost (through browser).${reset}"
+	fi
 	if [ $# -eq 0 ] || ( [ $# -eq 1 ] && ( [ $(containsElement "--v" $@) -eq 1 ] || [ $(containsElement "--verbose" $@) -eq 1 ] ) )
 	then
 		echo "${green}No args provided, ${blue}default${green} behaviour${reset}"
@@ -362,9 +410,6 @@ function setup() {
 			fi
 		done
 	fi
-	#if [ $action_f -eq 0 ]
-	#then
-
 	echo ""
 	if [ $ERRORS -eq 1 ]
 	then
@@ -372,6 +417,7 @@ function setup() {
 	else
 		echo -e "${green_b}Finished${green} without errors.${reset}"
 	fi
+	sed -i "" "s/FIRST_TIME=1/FIRST_TIME=0/g" ./.settings
 }
 
 setup "$@"

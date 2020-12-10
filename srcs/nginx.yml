@@ -5,15 +5,16 @@ metadata:
   labels:
     app: nginx
 spec:
+  type: LoadBalancer
   selector:
     app: nginx
   ports:
-    - name: http
-      port: 80
-    - name: https
-      port: 443
-    - name: ssh
-      port: 22
+  - name: http
+    port: 80
+  - name: https
+    port: 443
+  - name: ssh
+    port: 22
 ---
 kind: Deployment
 apiVersion: apps/v1
@@ -37,10 +38,14 @@ spec:
         env:
         - name: "IP"
           value: "__IP_VAR__"
+        - name: "SSH_USER"
+          value: "admin"
+        - name: "SSH_PASSWORD"
+          value: "admin"
         ports:
         - containerPort: 80
           name: http
         - containerPort: 443
           name: https
-        - containerPort: 4000
+        - containerPort: 22
           name: ssh
